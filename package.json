@@ -1,0 +1,87 @@
+{
+  "name": "claude-code-pings",
+  "displayName": "Claude Code Pings",
+  "description": "Plays distinct sounds when Claude Code finishes a task, asks a question, or needs permission",
+  "version": "1.0.0",
+  "publisher": "roro",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": ["Other"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "claudeCodePings.toggleSound",
+        "title": "Claude Code Pings: Toggle Sound"
+      }
+    ],
+    "configuration": {
+      "title": "Claude Code Pings",
+      "properties": {
+        "claudeCodePings.taskCompleted.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play a sound when Claude finishes a task."
+        },
+        "claudeCodePings.taskCompleted.sound": {
+          "type": "string",
+          "enum": [
+            "Tada", "Chimes", "Chord", "Ding", "Notify",
+            "Notify Email", "Notify Calendar", "Notify System",
+            "Exclamation", "Ringin"
+          ],
+          "default": "Tada",
+          "description": "Sound to play when Claude finishes a task."
+        },
+        "claudeCodePings.asksQuestion.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play a sound when Claude asks you a question."
+        },
+        "claudeCodePings.asksQuestion.sound": {
+          "type": "string",
+          "enum": [
+            "Tada", "Chimes", "Chord", "Ding", "Notify",
+            "Notify Email", "Notify Calendar", "Notify System",
+            "Exclamation", "Ringin"
+          ],
+          "default": "Notify Email",
+          "description": "Sound to play when Claude asks a question."
+        },
+        "claudeCodePings.needsPermission.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play a sound when Claude needs permission to use a tool."
+        },
+        "claudeCodePings.needsPermission.sound": {
+          "type": "string",
+          "enum": [
+            "Tada", "Chimes", "Chord", "Ding", "Notify",
+            "Notify Email", "Notify Calendar", "Notify System",
+            "Exclamation", "Ringin"
+          ],
+          "default": "Notify System",
+          "description": "Sound to play when Claude needs permission."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "npx @vscode/vsce package --allow-missing-repository"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^3.0.0"
+  }
+}
