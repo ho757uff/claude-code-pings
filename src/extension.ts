@@ -43,3 +43,65 @@ let statusBarItem: vscode.StatusBarItem;
 let signalWatcher: fs.FSWatcher | null = null;
 let soundEnabled = true;
 let lastSignalContent = "";
+
+// --- Sound playback ---
+function playSound(soundName: string): void {
+  const wavPath = SOUND_MAP[soundName];
+  if (!wavPath) {
+    console.error(`Claude Code Pings: Unknown sound "${soundName}"`);
+    return;
+  }
+
+  const ps = spawn("powershell", [
+    "-NoProfile",
+    "-NoLogo",
+    "-Command",
+    `(New-Object System.Media.SoundPlayer '${wavPath}').PlaySync()`,
+  ], {
+    stdio: "ignore",
+    windowsHide: true,
+  });
+
+  ps.on("error", (err) => {
+    console.error("Claude Code Pings: Sound playback failed:", err.message);
+  });
+
+  ps.unref();
+}
+
+// --- Signal handling ---
+function handleSignal(): void {
+  let content = "";
+  try {
+    content = fs.readFileSync(SIGNAL_FILE, "utf-8").trim();
+  } catch {
+    return;
+  }
+
+  // Skip if content hasn't changed (debounce duplicate fs.watch events)
+  if (content === lastSignalContent) {
+    return;
+  }
+  lastSignalContent = content;
+
+  // Parse signal: "<event> <timestamp>"
+  const eventType = content.split(" ")[0] as EventType;
+  const config = EVENT_CONFIG[eventType];
+  if (!config) {
+    return;
+  }
+
+  // Check if this event is enabled and sound is not globally muted
+  if (!soundEnabled) {
+    return;
+  }
+
+  const cfg = vscode.workspace.getConfiguration("claudeCodePings");
+  const enabled = cfg.get<boolean>(config.enabledKey, true);
+  if (!enabled) {
+    return;
+  }
+
+  const soundName = cfg.get<string>(config.soundKey, config.defaultSound);
+  playSound(soundName);
+}
