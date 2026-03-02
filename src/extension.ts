@@ -231,3 +231,76 @@ function teardownHooks(): void {
   }
   writeClaudeSettings(settings);
 }
+
+// --- Status bar ---
+function updateStatusBar(): void {
+  if (soundEnabled) {
+    statusBarItem.text = "$(bell) Pings";
+    statusBarItem.tooltip = "Claude Code Pings — sound ON (click to mute)";
+    statusBarItem.backgroundColor = undefined;
+  } else {
+    statusBarItem.text = "$(bell-slash) Pings";
+    statusBarItem.tooltip = "Claude Code Pings — sound OFF (click to unmute)";
+    statusBarItem.backgroundColor = new vscode.ThemeColor("statusBarItem.warningBackground");
+  }
+}
+
+// --- Extension entry points ---
+export function activate(context: vscode.ExtensionContext): void {
+  // Set up hooks in Claude's configuration
+  setupHooks(context);
+
+  // Initialize mute state from flag file
+  soundEnabled = !fs.existsSync(MUTE_FLAG);
+
+  // Create signal file if it doesn't exist
+  fs.mkdirSync(HOOKS_DIR, { recursive: true });
+  if (!fs.existsSync(SIGNAL_FILE)) {
+    fs.writeFileSync(SIGNAL_FILE, "");
+  }
+
+  // Status bar item
+  statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+  statusBarItem.command = "claudeCodePings.toggleSound";
+  updateStatusBar();
+  statusBarItem.show();
+  context.subscriptions.push(statusBarItem);
+
+  // Toggle command
+  const toggleCmd = vscode.commands.registerCommand("claudeCodePings.toggleSound", () => {
+    soundEnabled = !soundEnabled;
+    if (soundEnabled) {
+      try { fs.unlinkSync(MUTE_FLAG); } catch {}
+    } else {
+      fs.writeFileSync(MUTE_FLAG, "");
+    }
+    updateStatusBar();
+    vscode.window.showInformationMessage(
+      `Claude Code Pings: sound ${soundEnabled ? "ON" : "OFF"}`
+    );
+  });
+  context.subscriptions.push(toggleCmd);
+
+  // Watch signal file for changes
+  signalWatcher = fs.watch(SIGNAL_FILE, (eventType) => {
+    if (eventType === "change") {
+      handleSignal();
+    }
+  });
+  context.subscriptions.push({
+    dispose: () => {
+      if (signalWatcher) {
+        signalWatcher.close();
+        signalWatcher = null;
+      }
+    },
+  });
+}
+
+export function deactivate(): void {
+  if (signalWatcher) {
+    signalWatcher.close();
+    signalWatcher = null;
+  }
+  teardownHooks();
+}
