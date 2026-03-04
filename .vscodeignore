@@ -1,8 +1,15 @@
 .vscode/**
+.claude/**
 src/**
 node_modules/**
+docs/**
 tsconfig.json
 **/*.ts
 **/*.map
-docs/**
+*.vsix
+test-sounds.ps1
+test-sounds2.ps1
+ROADMAP.md
+images/Squared.png
+images/icon.svg
 .gitignore

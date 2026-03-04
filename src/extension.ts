@@ -10,6 +10,7 @@ const HOOKS_DIR = path.join(CLAUDE_DIR, "hooks");
 const SETTINGS_FILE = path.join(CLAUDE_DIR, "settings.json");
 const SIGNAL_FILE = path.join(HOOKS_DIR, "claude-pings-signal");
 const MUTE_FLAG = path.join(HOOKS_DIR, "claude-pings-muted");
+const CLAIM_FILE = path.join(HOOKS_DIR, "claude-pings-claim");
 
 // Hook file destinations in ~/.claude/hooks/
 const HOOK_QUESTION = path.join(HOOKS_DIR, "claude-pings-on-question.ps1");
@@ -47,8 +48,9 @@ let lastSignalContent = "";
 
 // --- Persistent sound player ---
 // A single PowerShell process stays alive and plays sounds on demand via stdin.
-// This avoids Windows audio session issues where spawning a new process per sound
-// causes volume ducking on the 2nd playback.
+// Uses winmm.dll PlaySound instead of System.Media.SoundPlayer to avoid
+// Windows audio ducking — PlaySound uses the System Sounds mixer channel
+// which is not subject to communication-activity volume reduction.
 function ensureSoundPlayer(): ReturnType<typeof spawn> | null {
   if (soundPlayer && soundPlayer.exitCode === null) {
     return soundPlayer;
@@ -58,7 +60,7 @@ function ensureSoundPlayer(): ReturnType<typeof spawn> | null {
     "-NoProfile",
     "-NoLogo",
     "-Command",
-    "while ($line = [Console]::ReadLine()) { if ($line -and (Test-Path $line)) { (New-Object System.Media.SoundPlayer $line).PlaySync() } }",
+    "Add-Type -MemberDefinition '[DllImport(\"winmm.dll\")] public static extern bool PlaySound(string fname, IntPtr hmod, uint fdwSound);' -Namespace Win32 -Name Sound; while ($line = [Console]::ReadLine()) { if ($line -and (Test-Path $line)) { [Win32.Sound]::PlaySound($line, [IntPtr]::Zero, 0x20002) } }",
   ], {
     stdio: ["pipe", "ignore", "ignore"],
     windowsHide: true,
@@ -112,25 +114,45 @@ function processSignal(): void {
     return;
   }
 
-  // Skip empty content (file was truncated but not yet written)
   if (!content) {
     return;
   }
 
-  // Skip if content hasn't changed (debounce duplicate fs.watch events)
+  // In-memory dedup (same instance, duplicate fs.watch events)
   if (content === lastSignalContent) {
     return;
   }
   lastSignalContent = content;
 
   // Parse signal: "<event> <timestamp>"
-  const eventType = content.split(" ")[0] as EventType;
+  const parts = content.split(" ");
+  if (parts.length < 2) {
+    return;
+  }
+  const eventType = parts[0] as EventType;
+  const timestamp = parts[1];
+
+  // Cross-instance dedup: check if another VS Code window already claimed this signal.
+  // Each instance watches the same signal file, but only the first to claim should play.
+  try {
+    const claimed = fs.readFileSync(CLAIM_FILE, "utf-8").trim();
+    if (claimed === timestamp) {
+      return;
+    }
+  } catch {
+    // Claim file doesn't exist yet — we're first
+  }
+
+  // Claim this signal for our instance
+  try {
+    fs.writeFileSync(CLAIM_FILE, timestamp);
+  } catch {}
+
   const config = EVENT_CONFIG[eventType];
   if (!config) {
     return;
   }
 
-  // Check if this event is enabled and sound is not globally muted
   if (!soundEnabled) {
     return;
   }
@@ -243,7 +265,7 @@ function setupHooks(context: vscode.ExtensionContext): void {
 
 function teardownHooks(): void {
   // Remove hook files
-  for (const file of [HOOK_QUESTION, HOOK_PERMISSION, HOOK_STOP, SIGNAL_FILE, MUTE_FLAG]) {
+  for (const file of [HOOK_QUESTION, HOOK_PERMISSION, HOOK_STOP, SIGNAL_FILE, MUTE_FLAG, CLAIM_FILE]) {
     try {
       fs.unlinkSync(file);
     } catch {}

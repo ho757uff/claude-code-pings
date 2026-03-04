@@ -4,10 +4,17 @@
   "description": "Plays distinct sounds when Claude Code finishes a task, asks a question, or needs permission",
   "version": "1.0.0",
   "publisher": "roro",
+  "icon": "images/Rounded.png",
+  "license": "MIT",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/ho757uff/claude-code-pings.git"
   },
+  "homepage": "https://github.com/ho757uff/claude-code-pings#readme",
+  "bugs": {
+    "url": "https://github.com/ho757uff/claude-code-pings/issues"
+  },
+  "keywords": ["claude", "sound", "notification", "ping", "alert", "claude-code"],
   "engines": {
     "vscode": "^1.85.0"
   },
