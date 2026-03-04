@@ -4,6 +4,12 @@
 
 Never miss a prompt from Claude Code again — hear it even when VS Code is in the background.
 
+## Install
+
+Download `claude-code-pings-1.0.0.vsix` and run:
+
+code --install-extension claude-code-pings-1.0.0.vsix
+
 ## Features
 
 | Event | Default Sound | Description |
