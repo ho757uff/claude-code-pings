@@ -51,7 +51,7 @@
             "Notify Email", "Notify Calendar", "Notify System",
             "Exclamation", "Ringin"
           ],
-          "default": "Notify Email",
+          "default": "Chord",
           "description": "Sound to play when Claude asks a question."
         },
         "claudeCodePings.needsPermission.enabled": {

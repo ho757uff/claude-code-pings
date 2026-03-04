@@ -33,7 +33,7 @@ const SOUND_MAP: Record<string, string> = {
 // Event type → settings key mapping
 type EventType = "question" | "permission" | "done";
 const EVENT_CONFIG: Record<EventType, { enabledKey: string; soundKey: string; defaultSound: string }> = {
-  question: { enabledKey: "asksQuestion.enabled", soundKey: "asksQuestion.sound", defaultSound: "Notify Email" },
+  question: { enabledKey: "asksQuestion.enabled", soundKey: "asksQuestion.sound", defaultSound: "Chord" },
   permission: { enabledKey: "needsPermission.enabled", soundKey: "needsPermission.sound", defaultSound: "Notify System" },
   done: { enabledKey: "taskCompleted.enabled", soundKey: "taskCompleted.sound", defaultSound: "Tada" },
 };
@@ -41,10 +41,41 @@ const EVENT_CONFIG: Record<EventType, { enabledKey: string; soundKey: string; de
 // --- Extension state ---
 let statusBarItem: vscode.StatusBarItem;
 let signalWatcher: fs.FSWatcher | null = null;
+let soundPlayer: ReturnType<typeof spawn> | null = null;
 let soundEnabled = true;
 let lastSignalContent = "";
 
-// --- Sound playback ---
+// --- Persistent sound player ---
+// A single PowerShell process stays alive and plays sounds on demand via stdin.
+// This avoids Windows audio session issues where spawning a new process per sound
+// causes volume ducking on the 2nd playback.
+function ensureSoundPlayer(): ReturnType<typeof spawn> | null {
+  if (soundPlayer && soundPlayer.exitCode === null) {
+    return soundPlayer;
+  }
+
+  soundPlayer = spawn("powershell", [
+    "-NoProfile",
+    "-NoLogo",
+    "-Command",
+    "while ($line = [Console]::ReadLine()) { if ($line -and (Test-Path $line)) { (New-Object System.Media.SoundPlayer $line).PlaySync() } }",
+  ], {
+    stdio: ["pipe", "ignore", "ignore"],
+    windowsHide: true,
+  });
+
+  soundPlayer.on("error", (err) => {
+    console.error("Claude Code Pings: Sound player failed:", err.message);
+    soundPlayer = null;
+  });
+
+  soundPlayer.on("exit", () => {
+    soundPlayer = null;
+  });
+
+  return soundPlayer;
+}
+
 function playSound(soundName: string): void {
   const wavPath = SOUND_MAP[soundName];
   if (!wavPath) {
@@ -52,29 +83,37 @@ function playSound(soundName: string): void {
     return;
   }
 
-  const ps = spawn("powershell", [
-    "-NoProfile",
-    "-NoLogo",
-    "-Command",
-    `(New-Object System.Media.SoundPlayer '${wavPath}').PlaySync()`,
-  ], {
-    stdio: "ignore",
-    windowsHide: true,
-  });
-
-  ps.on("error", (err) => {
-    console.error("Claude Code Pings: Sound playback failed:", err.message);
-  });
-
-  ps.unref();
+  const player = ensureSoundPlayer();
+  if (player && player.stdin && player.stdin.writable) {
+    player.stdin.write(wavPath + "\n");
+  }
 }
 
 // --- Signal handling ---
+let signalDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+
 function handleSignal(): void {
+  // Debounce: wait 50ms for the file write to complete before reading.
+  // On Windows, fs.watch can fire mid-write (after truncation, before content).
+  if (signalDebounceTimer) {
+    clearTimeout(signalDebounceTimer);
+  }
+  signalDebounceTimer = setTimeout(() => {
+    signalDebounceTimer = null;
+    processSignal();
+  }, 50);
+}
+
+function processSignal(): void {
   let content = "";
   try {
     content = fs.readFileSync(SIGNAL_FILE, "utf-8").trim();
   } catch {
+    return;
+  }
+
+  // Skip empty content (file was truncated but not yet written)
+  if (!content) {
     return;
   }
 
@@ -282,10 +321,10 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(toggleCmd);
 
   // Watch signal file for changes
-  signalWatcher = fs.watch(SIGNAL_FILE, (eventType) => {
-    if (eventType === "change") {
-      handleSignal();
-    }
+  // On Windows, fs.watch may fire "rename" instead of "change" for overwrites,
+  // so we handle both event types. The debounce in handleSignal prevents duplicates.
+  signalWatcher = fs.watch(SIGNAL_FILE, () => {
+    handleSignal();
   });
   context.subscriptions.push({
     dispose: () => {
@@ -301,6 +340,10 @@ export function deactivate(): void {
   if (signalWatcher) {
     signalWatcher.close();
     signalWatcher = null;
+  }
+  if (soundPlayer) {
+    soundPlayer.kill();
+    soundPlayer = null;
   }
   teardownHooks();
 }
