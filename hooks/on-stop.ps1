@@ -2,7 +2,7 @@
 # Writes a "done" signal unless another hook already signaled recently.
 $ErrorActionPreference = 'SilentlyContinue'
 
-$hooksDir = Join-Path ($env:USERPROFILE) '.claude' 'hooks'
+$hooksDir = Join-Path (Join-Path $env:USERPROFILE '.claude') 'hooks'
 $muteFlag = Join-Path $hooksDir 'claude-pings-muted'
 $signalFile = Join-Path $hooksDir 'claude-pings-signal'
 

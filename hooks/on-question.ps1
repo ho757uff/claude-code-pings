@@ -2,7 +2,7 @@
 # Writes a signal so the VS Code extension can play the question sound.
 $ErrorActionPreference = 'SilentlyContinue'
 
-$hooksDir = Join-Path ($env:USERPROFILE) '.claude' 'hooks'
+$hooksDir = Join-Path (Join-Path $env:USERPROFILE '.claude') 'hooks'
 $muteFlag = Join-Path $hooksDir 'claude-pings-muted'
 $signalFile = Join-Path $hooksDir 'claude-pings-signal'
 
