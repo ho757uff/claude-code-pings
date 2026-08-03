@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"C:\\Users\\theya\\Desktop\\iDev\\Pantheon\\scripts\\hooks\\pantheon-guard.ps1\" -Laws B,C"
+          }
+        ]
+      }
+    ]
+  }
+}
