@@ -1,4 +1,5 @@
 node_modules/
 out/
 *.vsix
-.claude/
+.claude/*
+!.claude/settings.json
