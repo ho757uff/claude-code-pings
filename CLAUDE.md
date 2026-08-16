@@ -18,6 +18,8 @@
 - Si l'opération contractuelle est bloquée ou échoue : sortir en <MAILLON>_FAIL loggé, jamais improviser une alternative.
 - Zéro fallback de maillon : copie au lieu de move, filesystem au lieu de git, portée inventée = interdits. Le best-effort appartient à l'orchestrateur.
 - Un run sur portée inventée est pire qu'un run absent : il a l'apparence de l'autorité sans en avoir la base.
+- Tout STOP ou refus d'etape doit citer mot a mot la clause qui l'impose (contrat du maillon OU corpus de lois). Citation impossible = la condition n'existe pas : executer.
+- Issues d'un maillon : OK / PARTIEL / FAIL. PARTIEL = etape N non realisable (motif mesure, jamais deduit), etapes 1..N-1 executees et rapportees. Un obstacle a l'etape N n'autorise que le saut de l'etape N, jamais une alternative improvisee.
 
 ## Préconditions d'un plan de baptême
 - Avant le test 1, lister les préconditions du geste testé : fixture trackée par git (si git mv/rm), vault clean et commité (si le geste lit HEAD), cache plugin resync (si le geste dépend du code modifié), règle allow posée (si le geste requiert une permission headless).
