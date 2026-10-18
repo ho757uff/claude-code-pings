@@ -39,4 +39,18 @@
 - Avant npm run dev / next dev : verifier qu'aucune instance du meme working-dir ne tourne
   deja et que le port cible n'est pas occupe par un processus orphelin.
 - Si un serveur du projet repond deja : le reutiliser (HMR sert les modifs locales).
+
+## Périmètre des gates Chaos (validateur non redondant)
+- Chaos valide des CATÉGORIES, pas des gestes. Quatre, fermées :
+  1. IRRÉVERSIBLE — destruction d'un dépôt, d'un bundle, d'une clé, d'une donnée sans rewind.
+  2. PUBLIC — mise en production, publication d'un package, contenu mis en ligne.
+  3. ARGENT OU SECRETS — comptes fournisseurs, clés, paiements, identifiants.
+  4. DOCTRINE — amendement d'une charte, d'une loi, d'un contrat de contenu.
+- Commits : acte de l'agent, toujours (1 sujet = 1 commit).
+- Push : acte de l'agent UNIQUEMENT en clôture de `/hermes:send` (session → seal → vérification finale OK),
+  et seulement dans un royaume qui l'a ouvert (loi P posée dans son `.claude\settings.json`). Hors rituel,
+  ou royaume non ouvert : le push reste un geste de Chaos.
+- Une question posée à Chaos hors des 4 catégories est un écart : `/hermes:session` le consigne en errorlog
+  (→ Rhadamanthe), puis l'agent décide seul.
+- Un CLAUDE.md de projet peut RESSERRER ce périmètre, jamais l'élargir.
 <!-- /pantheon-lois -->
