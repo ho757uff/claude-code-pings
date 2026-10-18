@@ -54,3 +54,6 @@
   (→ Rhadamanthe), puis l'agent décide seul.
 - Un CLAUDE.md de projet peut RESSERRER ce périmètre, jamais l'élargir.
 <!-- /pantheon-lois -->
+
+## Règles git / push — spécifiques au royaume
+- Push : loi P - aucun deploiement au push mesure le 18/10 (rapport Pantheon docs/reports/2026-10-18_mesure-deploiement-au-push.md).
