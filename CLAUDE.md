@@ -44,7 +44,7 @@
 - Chaos valide des CATÉGORIES, pas des gestes. Quatre, fermées :
   1. IRRÉVERSIBLE — destruction d'un dépôt, d'un bundle, d'une clé, d'une donnée sans rewind.
   2. PUBLIC — mise en production, publication d'un package, contenu mis en ligne.
-  3. ARGENT OU SECRETS — comptes fournisseurs, clés, paiements, identifiants.
+  3. ARGENT OU ACCÈS — comptes fournisseurs, clés, paiements, identifiants.
   4. DOCTRINE — amendement d'une charte, d'une loi, d'un contrat de contenu.
 - Commits : acte de l'agent, toujours (1 sujet = 1 commit).
 - Push : acte de l'agent UNIQUEMENT en clôture de `/hermes:send` (session → seal → vérification finale OK),
