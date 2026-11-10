@@ -50,6 +50,7 @@
 - Push : acte de l'agent UNIQUEMENT en clôture de `/hermes:send` (session → seal → vérification finale OK),
   et seulement dans un royaume qui l'a ouvert (loi P posée dans son `.claude\settings.json`). Hors rituel,
   ou royaume non ouvert : le push reste un geste de Chaos.
+- Exception (verdict Chaos 09/11, registre Trinity R-22) : un royaume dont le CLAUDE.md porte, hors bloc, la ligne « Push : libre » (aujourd'hui : Țepeș seul) pousse après chaque commit, sans rituel ni geste de Chaos. `sync-lois` ne l'arme pas (garde local `-Laws C` seulement).
 - Une question posée à Chaos hors des 4 catégories est un écart : `/hermes:session` le consigne en errorlog
   (→ Rhadamanthe), puis l'agent décide seul.
 - Un CLAUDE.md de projet peut RESSERRER ce périmètre, jamais l'élargir.
