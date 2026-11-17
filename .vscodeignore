@@ -13,3 +13,4 @@ ROADMAP.md
 images/Squared.png
 images/icon.svg
 .gitignore
+test/**
