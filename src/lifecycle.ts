@@ -131,6 +131,63 @@ export function setupHooks(claudeDir: string, extensionPath: string): void {
   writeClaudeSettings(p.settingsFile, settings);
 }
 
+// --- Instance registry ---
+// Each VS Code window runs its own extension host. Each host registers a file
+// named after its PID; hooks are torn down only when the last live host leaves.
+
+function instancesDir(claudeDir: string): string {
+  return path.join(claudePaths(claudeDir).hooksDir, "claude-pings-instances");
+}
+
+function isAlive(pid: number): boolean {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (err) {
+    // EPERM: the process exists but we may not signal it.
+    return (err as NodeJS.ErrnoException).code === "EPERM";
+  }
+}
+
+export function registerInstance(claudeDir: string, pid: number): void {
+  const dir = instancesDir(claudeDir);
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(path.join(dir, String(pid)), "");
+}
+
+/**
+ * Unregisters this host. Tears hooks down only if no other live host remains.
+ * Returns true when this host was the last one (hooks removed).
+ */
+export function releaseInstance(claudeDir: string, pid: number): boolean {
+  const dir = instancesDir(claudeDir);
+  // Remove our own entry BEFORE listing: if two hosts close at the same time,
+  // at least one of them sees an empty registry and tears down.
+  try { fs.unlinkSync(path.join(dir, String(pid))); } catch {}
+
+  let others: string[] = [];
+  try { others = fs.readdirSync(dir); } catch {}
+
+  let liveOthers = 0;
+  for (const name of others) {
+    const other = Number(name);
+    if (Number.isInteger(other) && other > 0 && isAlive(other)) {
+      liveOthers++;
+    } else {
+      // Dead host (crash, killed window) or junk entry: purge it.
+      try { fs.unlinkSync(path.join(dir, name)); } catch {}
+    }
+  }
+
+  if (liveOthers > 0) {
+    return false;
+  }
+
+  teardownHooks(claudeDir);
+  try { fs.rmdirSync(dir); } catch {}
+  return true;
+}
+
 export function teardownHooks(claudeDir: string): void {
   const p = claudePaths(claudeDir);
 

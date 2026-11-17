@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import * as fs from "fs";
 import * as path from "path";
 import { spawn } from "child_process";
-import { setupHooks, teardownHooks } from "./lifecycle";
+import { registerInstance, releaseInstance, setupHooks } from "./lifecycle";
 
 // --- Paths ---
 const HOME = process.env.USERPROFILE || process.env.HOME || "~";
@@ -178,6 +178,9 @@ function updateStatusBar(): void {
 // --- Extension entry points ---
 export function activate(context: vscode.ExtensionContext): void {
   // Set up hooks in Claude's configuration
+  // Register this window (extension host) before installing, so a window
+  // closing concurrently does not tear down under our feet.
+  registerInstance(CLAUDE_DIR, process.pid);
   setupHooks(CLAUDE_DIR, context.extensionPath);
 
   // Initialize mute state from flag file
@@ -236,5 +239,6 @@ export function deactivate(): void {
     soundPlayer.kill();
     soundPlayer = null;
   }
-  teardownHooks(CLAUDE_DIR);
+  // Remove hooks only if this was the last open window.
+  releaseInstance(CLAUDE_DIR, process.pid);
 }
