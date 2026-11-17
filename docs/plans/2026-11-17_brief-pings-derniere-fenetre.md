@@ -19,3 +19,6 @@
 **Critères de sortie** : vsix construit ; rapport ecrit.
 
 1 sujet = 1 commit. Pas de push.
+## Avancement
+- [x] P1 — Compter les fenetres actives
+- [x] P2 — Trace
