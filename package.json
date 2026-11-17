@@ -2,7 +2,7 @@
   "name": "claude-code-pings",
   "displayName": "Claude Code Pings",
   "description": "Plays distinct sounds when Claude Code finishes a task, asks a question, or needs permission",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "publisher": "roro",
   "icon": "images/Rounded.png",
   "license": "MIT",
